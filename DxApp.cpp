@@ -1,4 +1,115 @@
 #include "DxApp.h"
+#include "ShaderUtils.h"
+
+struct Vertex
+{
+    float x, y, z;
+    COLORREF color;
+};
+
+bool DxApp::InitTriangle()
+{
+    if (!CreateTriangleGeometry())
+        return false;
+
+    if (!CreateTriangleShadersAndLayout())
+        return false;
+
+    return true;
+}
+
+bool DxApp::CreateTriangleGeometry()
+{
+    static const Vertex Vertices[] =
+    {
+        { -0.5f, -0.5f, 0.0f, RGB(90, 255, 120) },
+        {  0.5f, -0.5f, 0.0f, RGB(255, 230,  70) },
+        {  0.0f,  0.5f, 0.0f, RGB(255, 120, 200) },
+    };
+
+    D3D11_BUFFER_DESC vbDesc = {};
+    vbDesc.ByteWidth = sizeof(Vertices);
+    vbDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+    D3D11_SUBRESOURCE_DATA vbData = {};
+    vbData.pSysMem = &Vertices;
+    vbData.SysMemPitch = sizeof(Vertices);
+
+    HRESULT result = m_pDevice->CreateBuffer(&vbDesc, &vbData, &m_pVertexBuffer);
+    assert(SUCCEEDED(result));
+    if (FAILED(result)) return false;
+
+    SetResourceName(m_pVertexBuffer, "VertexBuffer");
+
+    static const USHORT Indices[] = { 0, 2, 1 };
+
+    D3D11_BUFFER_DESC ibDesc = {};
+    ibDesc.ByteWidth = sizeof(Indices);
+    ibDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+
+    D3D11_SUBRESOURCE_DATA ibData = {};
+    ibData.pSysMem = &Indices;
+    ibData.SysMemPitch = sizeof(Indices);
+
+    result = m_pDevice->CreateBuffer(&ibDesc, &ibData, &m_pIndexBuffer);
+    assert(SUCCEEDED(result));
+    if (FAILED(result)) return false;
+
+    SetResourceName(m_pIndexBuffer, "IndexBuffer");
+    return true;
+}
+
+bool DxApp::CreateTriangleShadersAndLayout()
+{
+    ID3DBlob* vsCode = nullptr;
+    ID3DBlob* psCode = nullptr;
+
+    if (!CompileShaderFromFile(L"Triangle.vs", &vsCode))
+        return false;
+
+    HRESULT result = m_pDevice->CreateVertexShader(
+        vsCode->GetBufferPointer(), vsCode->GetBufferSize(),
+        nullptr, &m_pVertexShader);
+    assert(SUCCEEDED(result));
+    if (FAILED(result)) { SAFE_RELEASE(vsCode); return false; }
+    SetResourceName(m_pVertexShader, "Triangle.vs");
+
+    if (!CompileShaderFromFile(L"Triangle.ps", &psCode))
+    {
+        SAFE_RELEASE(vsCode);
+        return false;
+    }
+
+    result = m_pDevice->CreatePixelShader(
+        psCode->GetBufferPointer(), psCode->GetBufferSize(),
+        nullptr, &m_pPixelShader);
+    assert(SUCCEEDED(result));
+    if (FAILED(result)) { SAFE_RELEASE(vsCode); SAFE_RELEASE(psCode); return false; }
+    SetResourceName(m_pPixelShader, "Triangle.ps");
+
+    static const D3D11_INPUT_ELEMENT_DESC InputDesc[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM,  0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    };
+
+    result = m_pDevice->CreateInputLayout(
+        InputDesc, 2,
+        vsCode->GetBufferPointer(), vsCode->GetBufferSize(),
+        &m_pInputLayout);
+
+    SAFE_RELEASE(vsCode);
+    SAFE_RELEASE(psCode);
+
+    assert(SUCCEEDED(result));
+    if (FAILED(result)) return false;
+
+    SetResourceName(m_pInputLayout, "InputLayout");
+    return true;
+}
+
 
 bool DxApp::Init(HINSTANCE hInstance)
 {
@@ -26,7 +137,7 @@ bool DxApp::InitWindow(HINSTANCE hInstance)
 
     m_hWnd = CreateWindow(
         wcex.lpszClassName,
-        _T("Задание 1 | Смирнова Анастасия"),
+        _T("Задание 2 | Смирнова Анастасия"),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
         800, 600,
@@ -130,6 +241,10 @@ bool DxApp::InitDirectX()
         return false;
 
     CreateBackBufferRTV();
+
+    if (!InitTriangle())
+        return false;
+
     return true;
 }
 
@@ -160,9 +275,41 @@ void DxApp::Render()
     static const FLOAT BackColor[4] = { 0.90f, 0.85f, 0.95f, 1.0f };
     m_pDeviceContext->ClearRenderTargetView(m_pBackBufferRTV, BackColor);
 
+    D3D11_VIEWPORT viewport;
+    viewport.TopLeftX = 0;
+    viewport.TopLeftY = 0;
+    viewport.Width = (FLOAT)m_width;
+    viewport.Height = (FLOAT)m_height;
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+    m_pDeviceContext->RSSetViewports(1, &viewport);
+
+    D3D11_RECT rect;
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = m_width;
+    rect.bottom = m_height;
+    m_pDeviceContext->RSSetScissorRects(1, &rect);
+
+    m_pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
+    ID3D11Buffer* vertexBuffers[] = { m_pVertexBuffer };
+    UINT strides[] = { 16 };
+    UINT offsets[] = { 0 };
+    m_pDeviceContext->IASetVertexBuffers(0, 1, vertexBuffers, strides, offsets);
+
+    m_pDeviceContext->IASetInputLayout(m_pInputLayout);
+    m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    m_pDeviceContext->VSSetShader(m_pVertexShader, nullptr, 0);
+    m_pDeviceContext->PSSetShader(m_pPixelShader, nullptr, 0);
+
+    m_pDeviceContext->DrawIndexed(3, 0, 0);
+
     HRESULT result = m_pSwapChain->Present(0, 0);
     assert(SUCCEEDED(result));
 }
+
 
 void DxApp::OnResize(UINT newWidth, UINT newHeight)
 {
@@ -188,8 +335,19 @@ void DxApp::OnResize(UINT newWidth, UINT newHeight)
     CreateBackBufferRTV();
 }
 
-void DxApp::Cleanup()
-{
+void DxApp::Cleanup(){
+    if (m_pDeviceContext)
+    {
+        m_pDeviceContext->ClearState();
+        m_pDeviceContext->Flush();
+    }
+
+    SAFE_RELEASE(m_pInputLayout);
+    SAFE_RELEASE(m_pVertexShader);
+    SAFE_RELEASE(m_pPixelShader);
+    SAFE_RELEASE(m_pVertexBuffer);
+    SAFE_RELEASE(m_pIndexBuffer);
+
     SAFE_RELEASE(m_pBackBufferRTV);
     SAFE_RELEASE(m_pSwapChain);
 
@@ -208,10 +366,11 @@ void DxApp::Cleanup()
 #endif
 
     SAFE_RELEASE(m_pDevice);
-
     SAFE_RELEASE(m_pSelectedAdapter);
     SAFE_RELEASE(m_pFactory);
 }
+
+
 
 int DxApp::Run()
 {

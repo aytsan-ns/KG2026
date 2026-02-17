@@ -1,6 +1,11 @@
 #pragma once
 #include "DxCommon.h"
 
+struct ID3D11Buffer;
+struct ID3D11VertexShader;
+struct ID3D11PixelShader;
+struct ID3D11InputLayout;
+
 class DxApp
 {
 public:
@@ -17,6 +22,10 @@ private:
     void OnResize(UINT newWidth, UINT newHeight);
     void Cleanup();
 
+    bool InitTriangle();
+    bool CreateTriangleGeometry();
+    bool CreateTriangleShadersAndLayout();
+
 private:
     HWND m_hWnd = nullptr;
 
@@ -30,4 +39,10 @@ private:
 
     IDXGIFactory* m_pFactory = nullptr;
     IDXGIAdapter* m_pSelectedAdapter = nullptr;
+
+    ID3D11Buffer* m_pVertexBuffer = nullptr;
+    ID3D11Buffer* m_pIndexBuffer = nullptr;
+    ID3D11VertexShader* m_pVertexShader = nullptr;
+    ID3D11PixelShader* m_pPixelShader = nullptr;
+    ID3D11InputLayout* m_pInputLayout = nullptr;
 };

@@ -128,11 +128,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DxApp.cpp" />
+    <ClCompile Include="ShaderUtils.cpp" />
     <ClCompile Include="WinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DxApp.h" />
     <ClInclude Include="DxCommon.h" />
+    <ClInclude Include="ShaderUtils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Triangle.ps" />
+    <None Include="Triangle.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
