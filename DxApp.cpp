@@ -359,7 +359,7 @@ void DxApp::Cleanup(){
         ID3D11Debug* d3dDebug = nullptr;
         if (SUCCEEDED(m_pDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&d3dDebug)))
         {
-            d3dDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+            d3dDebug->ReportLiveDeviceObjects((D3D11_RLDO_FLAGS)(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL));
             d3dDebug->Release();
         }
     }
