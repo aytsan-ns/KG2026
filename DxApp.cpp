@@ -1,10 +1,25 @@
 #include "DxApp.h"
 #include "ShaderUtils.h"
+#include <DirectXMath.h>
+#include <windowsx.h>
+#include <cmath>
+
+using namespace DirectX;
 
 struct Vertex
 {
     float x, y, z;
     COLORREF color;
+};
+
+struct ObjectBuffer
+{
+    DirectX::XMFLOAT4X4 model;
+};
+
+struct SceneBuffer
+{
+    DirectX::XMFLOAT4X4 vp;
 };
 
 bool DxApp::InitTriangle()
@@ -15,6 +30,44 @@ bool DxApp::InitTriangle()
     if (!CreateTriangleShadersAndLayout())
         return false;
 
+    if (!CreateConstantBuffers())
+        return false;
+
+    return true;
+}
+
+bool DxApp::CreateConstantBuffers()
+{
+    HRESULT result;
+
+    {
+        D3D11_BUFFER_DESC desc = {};
+        desc.ByteWidth = sizeof(ObjectBuffer);
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        desc.CPUAccessFlags = 0;
+
+        result = m_pDevice->CreateBuffer(&desc, nullptr, &m_pObjectBuffer);
+        assert(SUCCEEDED(result));
+        if (FAILED(result)) return false;
+
+        SetResourceName(m_pObjectBuffer, "ObjectBuffer");
+    }
+
+    {
+        D3D11_BUFFER_DESC desc = {};
+        desc.ByteWidth = sizeof(SceneBuffer);
+        desc.Usage = D3D11_USAGE_DYNAMIC;
+        desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+        result = m_pDevice->CreateBuffer(&desc, nullptr, &m_pSceneBuffer);
+        assert(SUCCEEDED(result));
+        if (FAILED(result)) return false;
+
+        SetResourceName(m_pSceneBuffer, "SceneBuffer");
+    }
+
     return true;
 }
 
@@ -22,9 +75,14 @@ bool DxApp::CreateTriangleGeometry()
 {
     static const Vertex Vertices[] =
     {
-        { -0.5f, -0.5f, 0.0f, RGB(90, 255, 120) },
-        {  0.5f, -0.5f, 0.0f, RGB(255, 230,  70) },
-        {  0.0f,  0.5f, 0.0f, RGB(255, 120, 200) },
+        { -0.5f, -0.5f, -0.5f, RGB(255, 120, 200) },
+        { -0.5f,  0.5f, -0.5f, RGB(255, 230,  70) },
+        {  0.5f,  0.5f, -0.5f, RGB(90, 255, 120) },
+        {  0.5f, -0.5f, -0.5f, RGB(120, 200, 255) },
+        { -0.5f, -0.5f,  0.5f, RGB(200, 120, 255) },
+        { -0.5f,  0.5f,  0.5f, RGB(255, 180, 120) },
+        {  0.5f,  0.5f,  0.5f, RGB(120, 255, 220) },
+        {  0.5f, -0.5f,  0.5f, RGB(255, 255, 120) },
     };
 
     D3D11_BUFFER_DESC vbDesc = {};
@@ -33,8 +91,7 @@ bool DxApp::CreateTriangleGeometry()
     vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA vbData = {};
-    vbData.pSysMem = &Vertices;
-    vbData.SysMemPitch = sizeof(Vertices);
+    vbData.pSysMem = Vertices;
 
     HRESULT result = m_pDevice->CreateBuffer(&vbDesc, &vbData, &m_pVertexBuffer);
     assert(SUCCEEDED(result));
@@ -42,7 +99,15 @@ bool DxApp::CreateTriangleGeometry()
 
     SetResourceName(m_pVertexBuffer, "VertexBuffer");
 
-    static const USHORT Indices[] = { 0, 2, 1 };
+    static const USHORT Indices[] =
+    {
+        0,1,2,  0,2,3,
+        4,6,5,  4,7,6,
+        0,4,5,  0,5,1,
+        3,2,6,  3,6,7,
+        1,5,6,  1,6,2,
+        0,3,7,  0,7,4
+    };
 
     D3D11_BUFFER_DESC ibDesc = {};
     ibDesc.ByteWidth = sizeof(Indices);
@@ -50,8 +115,7 @@ bool DxApp::CreateTriangleGeometry()
     ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
     D3D11_SUBRESOURCE_DATA ibData = {};
-    ibData.pSysMem = &Indices;
-    ibData.SysMemPitch = sizeof(Indices);
+    ibData.pSysMem = Indices;
 
     result = m_pDevice->CreateBuffer(&ibDesc, &ibData, &m_pIndexBuffer);
     assert(SUCCEEDED(result));
@@ -137,7 +201,7 @@ bool DxApp::InitWindow(HINSTANCE hInstance)
 
     m_hWnd = CreateWindow(
         wcex.lpszClassName,
-        _T("Задание 2 | Смирнова Анастасия"),
+        _T("Задание 3 | Смирнова Анастасия"),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
         800, 600,
@@ -294,7 +358,7 @@ void DxApp::Render()
     m_pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
     ID3D11Buffer* vertexBuffers[] = { m_pVertexBuffer };
-    UINT strides[] = { 16 };
+    UINT strides[] = { (UINT)sizeof(Vertex) };
     UINT offsets[] = { 0 };
     m_pDeviceContext->IASetVertexBuffers(0, 1, vertexBuffers, strides, offsets);
 
@@ -304,7 +368,42 @@ void DxApp::Render()
     m_pDeviceContext->VSSetShader(m_pVertexShader, nullptr, 0);
     m_pDeviceContext->PSSetShader(m_pPixelShader, nullptr, 0);
 
-    m_pDeviceContext->DrawIndexed(3, 0, 0);
+    DirectX::XMMATRIX m = DirectX::XMMatrixIdentity();
+
+    DirectX::XMMATRIX cam = DirectX::XMMatrixTranslation(0.0f, 0.0f, -m_camDist);
+    cam = DirectX::XMMatrixMultiply(cam, DirectX::XMMatrixRotationY(m_camYaw));
+    cam = DirectX::XMMatrixMultiply(cam, DirectX::XMMatrixRotationX(m_camPitch));
+    DirectX::XMMATRIX v = DirectX::XMMatrixInverse(nullptr, cam);
+
+    float f = 100.0f;
+    float n = 0.1f;
+    float fov = DirectX::XM_PI / 3.0f;
+    float aspectRatio = (float)m_height / (float)m_width;
+    float viewWidth = tanf(fov / 2.0f) * 2.0f * n;
+    float viewHeight = viewWidth * aspectRatio;
+    DirectX::XMMATRIX p = DirectX::XMMatrixPerspectiveLH(viewWidth, viewHeight, n, f);
+
+    DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(v, p);
+
+    ObjectBuffer obj = {};
+    DirectX::XMStoreFloat4x4(&obj.model, m);
+    m_pDeviceContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &obj, 0, 0);
+
+    D3D11_MAPPED_SUBRESOURCE subresource = {};
+    HRESULT mapRes = m_pDeviceContext->Map(m_pSceneBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource);
+    assert(SUCCEEDED(mapRes));
+    if (SUCCEEDED(mapRes))
+    {
+        SceneBuffer& scene = *reinterpret_cast<SceneBuffer*>(subresource.pData);
+        DirectX::XMStoreFloat4x4(&scene.vp, vp);
+        m_pDeviceContext->Unmap(m_pSceneBuffer, 0);
+    }
+
+    ID3D11Buffer* cbs[] = { m_pObjectBuffer, m_pSceneBuffer };
+    m_pDeviceContext->VSSetConstantBuffers(0, 2, cbs);
+
+    m_pDeviceContext->DrawIndexed(36, 0, 0);
+
 
     HRESULT result = m_pSwapChain->Present(0, 0);
     assert(SUCCEEDED(result));
@@ -347,6 +446,9 @@ void DxApp::Cleanup(){
     SAFE_RELEASE(m_pPixelShader);
     SAFE_RELEASE(m_pVertexBuffer);
     SAFE_RELEASE(m_pIndexBuffer);
+
+    SAFE_RELEASE(m_pObjectBuffer);
+    SAFE_RELEASE(m_pSceneBuffer);
 
     SAFE_RELEASE(m_pBackBufferRTV);
     SAFE_RELEASE(m_pSwapChain);
@@ -425,7 +527,41 @@ LRESULT CALLBACK DxApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
+    case WM_LBUTTONDOWN:
+        if (app)
+        {
+            app->m_mouseDown = true;
+            app->m_lastMouse = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+            SetCapture(hWnd);
+        }
+        return 0;
+
+    case WM_LBUTTONUP:
+        if (app)
+        {
+            app->m_mouseDown = false;
+            ReleaseCapture();
+        }
+        return 0;
+
+    case WM_MOUSEMOVE:
+        if (app && app->m_mouseDown)
+        {
+            int x = GET_X_LPARAM(lParam);
+            int y = GET_Y_LPARAM(lParam);
+
+            int dx = x - app->m_lastMouse.x;
+            int dy = y - app->m_lastMouse.y;
+            app->m_lastMouse = { x, y };
+
+            const float sens = 0.01f;
+            app->m_camYaw += dx * sens;
+            app->m_camPitch += dy * sens;
+
+        }
+        return 0;
     }
+
 
     return DefWindowProc(hWnd, message, wParam, lParam);
 }

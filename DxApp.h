@@ -25,6 +25,8 @@ private:
     bool InitTriangle();
     bool CreateTriangleGeometry();
     bool CreateTriangleShadersAndLayout();
+    bool CreateConstantBuffers();
+
 
 private:
     HWND m_hWnd = nullptr;
@@ -45,4 +47,13 @@ private:
     ID3D11VertexShader* m_pVertexShader = nullptr;
     ID3D11PixelShader* m_pPixelShader = nullptr;
     ID3D11InputLayout* m_pInputLayout = nullptr;
+
+    ID3D11Buffer* m_pObjectBuffer = nullptr;
+    ID3D11Buffer* m_pSceneBuffer = nullptr;
+
+    bool  m_mouseDown = false;
+    POINT m_lastMouse = { 0, 0 };
+    float m_camYaw = 0.0f;
+    float m_camPitch = 0.0f;
+    float m_camDist = 3.0f;
 };
