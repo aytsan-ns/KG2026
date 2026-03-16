@@ -27,6 +27,7 @@ VSOutput vs(VSInput vertex)
 
     float3 pos = cameraPos.xyz + vertex.pos * size.x;
     result.pos = mul(mul(float4(pos, 1.0f), model), vp);
+    result.pos.z = 0.0f; // reversed depth: skybox всегда на максимальной глубине
     result.localPos = vertex.pos;
 
     return result;
