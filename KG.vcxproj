@@ -123,7 +123,9 @@ copy /Y "$(ProjectDir)negx.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posz.dds" "$(OutDir)"
-copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
+
+copy /Y "$(ProjectDir)Transparent.ps" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,7 +157,9 @@ copy /Y "$(ProjectDir)negx.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posz.dds" "$(OutDir)"
-copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
+
+copy /Y "$(ProjectDir)Transparent.ps" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -173,6 +177,7 @@ copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"</Command>
     <None Include="Cube.vs" />
     <None Include="Skybox.ps" />
     <None Include="Skybox.vs" />
+    <None Include="Transparent.ps" />
     <None Include="Triangle.ps" />
     <None Include="Triangle.vs" />
   </ItemGroup>

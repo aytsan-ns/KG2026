@@ -9,6 +9,9 @@ struct ID3D11ShaderResourceView;
 struct ID3D11SamplerState;
 struct ID3D11Texture2D;
 struct ID3D11RasterizerState;
+struct ID3D11DepthStencilView;
+struct ID3D11DepthStencilState;
+struct ID3D11BlendState;
 
 class DxApp
 {
@@ -33,11 +36,16 @@ private:
 
     bool CreateCubeShadersAndLayout();
     bool CreateSkyboxShadersAndLayout();
+    bool CreateTransparentShader();
 
     bool CreateConstantBuffers();
     bool CreateCubeTexture();
     bool CreateCubemapTexture();
     bool CreateSampler();
+
+    bool CreateDepthBuffer();
+    bool CreateDepthStates();
+    bool CreateBlendStates();
 
 private:
     HWND m_hWnd = nullptr;
@@ -49,6 +57,8 @@ private:
     ID3D11DeviceContext* m_pDeviceContext = nullptr;
     IDXGISwapChain* m_pSwapChain = nullptr;
     ID3D11RenderTargetView* m_pBackBufferRTV = nullptr;
+    ID3D11Texture2D* m_pDepthBuffer = nullptr;
+    ID3D11DepthStencilView* m_pDepthBufferDSV = nullptr;
 
     IDXGIFactory* m_pFactory = nullptr;
     IDXGIAdapter* m_pSelectedAdapter = nullptr;
@@ -57,6 +67,7 @@ private:
     ID3D11Buffer* m_pCubeIndexBuffer = nullptr;
     ID3D11VertexShader* m_pCubeVertexShader = nullptr;
     ID3D11PixelShader* m_pCubePixelShader = nullptr;
+    ID3D11PixelShader* m_pTransparentPixelShader = nullptr;
     ID3D11InputLayout* m_pCubeInputLayout = nullptr;
     UINT m_cubeIndexCount = 0;
 
@@ -78,6 +89,10 @@ private:
 
     ID3D11SamplerState* m_pSampler = nullptr;
     ID3D11RasterizerState* m_pSkyRasterizerState = nullptr;
+    ID3D11DepthStencilState* m_pOpaqueDepthState = nullptr;
+    ID3D11DepthStencilState* m_pTransDepthState = nullptr;
+    ID3D11DepthStencilState* m_pSkyDepthState = nullptr;
+    ID3D11BlendState* m_pTransBlendState = nullptr;
 
     bool  m_mouseDown = false;
     POINT m_lastMouse = { 0, 0 };
