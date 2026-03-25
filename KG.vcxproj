@@ -125,7 +125,9 @@ copy /Y "$(ProjectDir)negy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posz.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
 
-copy /Y "$(ProjectDir)Transparent.ps" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)Transparent.ps" "$(OutDir)"
+
+copy /Y "$(ProjectDir)cube_nm.dds" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
