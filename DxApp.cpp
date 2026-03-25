@@ -11,6 +11,8 @@ using namespace DirectX;
 struct CubeVertex
 {
     float x, y, z;
+    float tx, ty, tz;
+    float nx, ny, nz;
     float u, v;
 };
 
@@ -19,10 +21,18 @@ struct SkyVertex
     float x, y, z;
 };
 
+struct Light
+{
+    DirectX::XMFLOAT4 pos;
+    DirectX::XMFLOAT4 color;
+};
+
 struct ObjectBuffer
 {
     DirectX::XMFLOAT4X4 model;
+    DirectX::XMFLOAT4X4 normalModel;
     DirectX::XMFLOAT4 size;
+    DirectX::XMFLOAT4 material;
     DirectX::XMFLOAT4 color;
 };
 
@@ -30,6 +40,9 @@ struct SceneBuffer
 {
     DirectX::XMFLOAT4X4 vp;
     DirectX::XMFLOAT4 cameraPos;
+    DirectX::XMINT4 lightCount;
+    Light lights[10];
+    DirectX::XMFLOAT4 ambientColor;
 };
 
 struct TransparentCubeInstance
@@ -52,6 +65,11 @@ static DirectX::XMMATRIX MakeCubeModel(const DirectX::XMFLOAT3& position, float 
 {
     return DirectX::XMMatrixScaling(scale, scale, scale) *
         DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+}
+
+static DirectX::XMMATRIX MakeNormalMatrix(DirectX::FXMMATRIX model)
+{
+    return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(nullptr, model));
 }
 
 static float ComputeTransparentSortKey(const DirectX::XMFLOAT3& cameraPos,
@@ -107,6 +125,9 @@ bool DxApp::InitScene()
         return false;
 
     if (!CreateCubeTexture())
+        return false;
+
+    if (!CreateCubeNormalMapTexture())
         return false;
 
     if (!CreateCubemapTexture())
@@ -181,40 +202,40 @@ bool DxApp::CreateCubeGeometry()
     static const CubeVertex Vertices[] =
     {
         // Front (-Z)
-        { -0.5f, -0.5f, -0.5f, 0.0f, 1.0f },
-        { -0.5f,  0.5f, -0.5f, 0.0f, 0.0f },
-        {  0.5f,  0.5f, -0.5f, 1.0f, 0.0f },
-        {  0.5f, -0.5f, -0.5f, 1.0f, 1.0f },
+        { -0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f, -1.0f,   0.0f, 1.0f },
+        { -0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f, -1.0f,   0.0f, 0.0f },
+        {  0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f, -1.0f,   1.0f, 0.0f },
+        {  0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f, -1.0f,   1.0f, 1.0f },
 
         // Back (+Z)
-        {  0.5f, -0.5f,  0.5f, 0.0f, 1.0f },
-        {  0.5f,  0.5f,  0.5f, 0.0f, 0.0f },
-        { -0.5f,  0.5f,  0.5f, 1.0f, 0.0f },
-        { -0.5f, -0.5f,  0.5f, 1.0f, 1.0f },
+        {  0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,  1.0f,   0.0f, 1.0f },
+        {  0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,  1.0f,   0.0f, 0.0f },
+        { -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,  1.0f,   1.0f, 0.0f },
+        { -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,  1.0f,   1.0f, 1.0f },
 
         // Left (-X)
-        { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f },
-        { -0.5f,  0.5f,  0.5f, 0.0f, 0.0f },
-        { -0.5f,  0.5f, -0.5f, 1.0f, 0.0f },
-        { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f },
+        { -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,-1.0f,  -1.0f, 0.0f,  0.0f,   0.0f, 1.0f },
+        { -0.5f,  0.5f,  0.5f,   0.0f, 0.0f,-1.0f,  -1.0f, 0.0f,  0.0f,   0.0f, 0.0f },
+        { -0.5f,  0.5f, -0.5f,   0.0f, 0.0f,-1.0f,  -1.0f, 0.0f,  0.0f,   1.0f, 0.0f },
+        { -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,-1.0f,  -1.0f, 0.0f,  0.0f,   1.0f, 1.0f },
 
         // Right (+X)
-        {  0.5f, -0.5f, -0.5f, 0.0f, 1.0f },
-        {  0.5f,  0.5f, -0.5f, 0.0f, 0.0f },
-        {  0.5f,  0.5f,  0.5f, 1.0f, 0.0f },
-        {  0.5f, -0.5f,  0.5f, 1.0f, 1.0f },
+        {  0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,  0.0f,   0.0f, 1.0f },
+        {  0.5f,  0.5f, -0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,  0.0f,   0.0f, 0.0f },
+        {  0.5f,  0.5f,  0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,  0.0f,   1.0f, 0.0f },
+        {  0.5f, -0.5f,  0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,  0.0f,   1.0f, 1.0f },
 
         // Top (+Y)
-        { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f },
-        { -0.5f,  0.5f,  0.5f, 0.0f, 0.0f },
-        {  0.5f,  0.5f,  0.5f, 1.0f, 0.0f },
-        {  0.5f,  0.5f, -0.5f, 1.0f, 1.0f },
+        { -0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f,  0.0f,   0.0f, 1.0f },
+        { -0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f,  0.0f,   0.0f, 0.0f },
+        {  0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f,  0.0f,   1.0f, 0.0f },
+        {  0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f,  0.0f,   1.0f, 1.0f },
 
         // Bottom (-Y)
-        { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f },
-        { -0.5f, -0.5f, -0.5f, 0.0f, 0.0f },
-        {  0.5f, -0.5f, -0.5f, 1.0f, 0.0f },
-        {  0.5f, -0.5f,  0.5f, 1.0f, 1.0f },
+        { -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f,-1.0f,  0.0f,   0.0f, 1.0f },
+        { -0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f,-1.0f,  0.0f,   0.0f, 0.0f },
+        {  0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f,-1.0f,  0.0f,   1.0f, 0.0f },
+        {  0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f,-1.0f,  0.0f,   1.0f, 1.0f },
     };
 
     static const USHORT Indices[] =
@@ -371,11 +392,13 @@ bool DxApp::CreateCubeShadersAndLayout()
     static const D3D11_INPUT_ELEMENT_DESC InputDesc[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 36, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
 
     result = m_pDevice->CreateInputLayout(
-        InputDesc, 2,
+        InputDesc, 4,
         vsCode->GetBufferPointer(), vsCode->GetBufferSize(),
         &m_pCubeInputLayout);
 
@@ -519,6 +542,69 @@ bool DxApp::CreateCubeTexture()
     if (FAILED(result)) return false;
 
     SetResourceName(m_pCubeTextureView, "CubeTextureView");
+    return true;
+}
+
+bool DxApp::CreateCubeNormalMapTexture()
+{
+    TextureDesc textureDesc;
+    if (!LoadDDS(L"cube_nm.dds", textureDesc, false))
+        return false;
+
+    D3D11_TEXTURE2D_DESC desc = {};
+    desc.Width = textureDesc.width;
+    desc.Height = textureDesc.height;
+    desc.MipLevels = textureDesc.mipLevels;
+    desc.ArraySize = 1;
+    desc.Format = textureDesc.fmt;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Usage = D3D11_USAGE_IMMUTABLE;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    std::vector<D3D11_SUBRESOURCE_DATA> data;
+    data.resize(textureDesc.mipLevels);
+
+    const unsigned char* pSrcData = reinterpret_cast<const unsigned char*>(textureDesc.pData);
+
+    UINT32 width = desc.Width;
+    UINT32 height = desc.Height;
+
+    for (UINT32 i = 0; i < desc.MipLevels; ++i)
+    {
+        UINT32 blockWidth = DivUp(width, 4u);
+        UINT32 blockHeight = DivUp(height, 4u);
+        UINT32 pitch = blockWidth * GetBytesPerBlock(desc.Format);
+
+        data[i].pSysMem = pSrcData;
+        data[i].SysMemPitch = pitch;
+        data[i].SysMemSlicePitch = 0;
+
+        pSrcData += pitch * blockHeight;
+
+        width = std::max(1u, width / 2u);
+        height = std::max(1u, height / 2u);
+    }
+
+    HRESULT result = m_pDevice->CreateTexture2D(&desc, data.data(), &m_pCubeNormalMapTexture);
+    assert(SUCCEEDED(result));
+    if (FAILED(result)) return false;
+
+    SetResourceName(m_pCubeNormalMapTexture, "cube_nm.dds");
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = desc.Format;
+    srvDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+
+    result = m_pDevice->CreateShaderResourceView(m_pCubeNormalMapTexture, &srvDesc, &m_pCubeNormalMapView);
+    assert(SUCCEEDED(result));
+    if (FAILED(result)) return false;
+
+    SetResourceName(m_pCubeNormalMapView, "CubeNormalMapView");
     return true;
 }
 
@@ -750,7 +836,7 @@ bool DxApp::InitWindow(HINSTANCE hInstance)
 
     m_hWnd = CreateWindow(
         wcex.lpszClassName,
-        _T("Задание 5 | Смирнова Анастасия"),
+        _T("Задание 6 | Смирнова Анастасия"),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
         800, 600,
@@ -936,6 +1022,23 @@ void DxApp::Render()
         SceneBuffer& scene = *reinterpret_cast<SceneBuffer*>(subresource.pData);
         DirectX::XMStoreFloat4x4(&scene.vp, vp);
         scene.cameraPos = DirectX::XMFLOAT4(camPos.x, camPos.y, camPos.z, 1.0f);
+
+        scene.lightCount = DirectX::XMINT4{ 2, 0, 0, 0 };
+
+        scene.lights[0].pos = DirectX::XMFLOAT4(-1.8f, 1.5f, -0.7f, 1.0f);
+        scene.lights[0].color = DirectX::XMFLOAT4(1.0f, 0.95f, 0.85f, 1.0f);
+
+        scene.lights[1].pos = DirectX::XMFLOAT4(1.6f, 1.0f, 2.4f, 1.0f);
+        scene.lights[1].color = DirectX::XMFLOAT4(0.55f, 0.70f, 1.0f, 1.0f);
+
+        for (int i = 2; i < 10; ++i)
+        {
+            scene.lights[i].pos = DirectX::XMFLOAT4(0, 0, 0, 0);
+            scene.lights[i].color = DirectX::XMFLOAT4(0, 0, 0, 0);
+        }
+
+        scene.ambientColor = DirectX::XMFLOAT4(0.12f, 0.12f, 0.14f, 1.0f);
+
         m_pDeviceContext->Unmap(m_pSceneBuffer, 0);
     }
 
@@ -951,7 +1054,7 @@ void DxApp::Render()
             UINT stride = sizeof(CubeVertex);
             UINT offset = 0;
             ID3D11Buffer* vbs[] = { m_pCubeVertexBuffer };
-            ID3D11ShaderResourceView* resources[] = { m_pCubeTextureView };
+            ID3D11ShaderResourceView* resources[] = { m_pCubeTextureView, m_pCubeNormalMapView };
 
             m_pDeviceContext->IASetVertexBuffers(0, 1, vbs, &stride, &offset);
             m_pDeviceContext->IASetIndexBuffer(m_pCubeIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
@@ -965,11 +1068,13 @@ void DxApp::Render()
 
             ObjectBuffer obj = {};
             DirectX::XMStoreFloat4x4(&obj.model, model);
+            DirectX::XMStoreFloat4x4(&obj.normalModel, MakeNormalMatrix(model));
             obj.size = DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f);
+            obj.material = DirectX::XMFLOAT4(32.0f, 0.0f, 0.0f, 0.0f);
             obj.color = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
             m_pDeviceContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &obj, 0, 0);
-            m_pDeviceContext->PSSetShaderResources(0, 1, resources);
+            m_pDeviceContext->PSSetShaderResources(0, 2, resources);
             m_pDeviceContext->DrawIndexed(m_cubeIndexCount, 0, 0);
         };
 
@@ -996,10 +1101,13 @@ void DxApp::Render()
         m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 
         ObjectBuffer obj = {};
-        DirectX::XMStoreFloat4x4(&obj.model, DirectX::XMMatrixIdentity());
+        DirectX::XMMATRIX skyModel = DirectX::XMMatrixIdentity();
+        DirectX::XMStoreFloat4x4(&obj.model, skyModel);
+        DirectX::XMStoreFloat4x4(&obj.normalModel, MakeNormalMatrix(skyModel));
         obj.size = DirectX::XMFLOAT4(
             ComputeSkySphereRadius(n, nearViewWidth, nearViewHeight),
             0.0f, 0.0f, 0.0f);
+        obj.material = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
         obj.color = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
         m_pDeviceContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &obj, 0, 0);
@@ -1031,7 +1139,7 @@ void DxApp::Render()
         UINT stride = sizeof(CubeVertex);
         UINT offset = 0;
         ID3D11Buffer* vbs[] = { m_pCubeVertexBuffer };
-        ID3D11ShaderResourceView* nullResources[] = { nullptr };
+        ID3D11ShaderResourceView* nullResources[] = { nullptr, nullptr };
         const float blendFactor[4] = { 0, 0, 0, 0 };
 
         m_pDeviceContext->IASetVertexBuffers(0, 1, vbs, &stride, &offset);
@@ -1041,7 +1149,7 @@ void DxApp::Render()
 
         m_pDeviceContext->VSSetShader(m_pCubeVertexShader, nullptr, 0);
         m_pDeviceContext->PSSetShader(m_pTransparentPixelShader, nullptr, 0);
-        m_pDeviceContext->PSSetShaderResources(0, 1, nullResources);
+        m_pDeviceContext->PSSetShaderResources(0, 2, nullResources);
 
         m_pDeviceContext->OMSetDepthStencilState(m_pTransDepthState, 0);
         m_pDeviceContext->OMSetBlendState(m_pTransBlendState, blendFactor, 0xFFFFFFFF);
@@ -1049,8 +1157,11 @@ void DxApp::Render()
         for (const auto& cube : transparentCubes)
         {
             ObjectBuffer obj = {};
-            DirectX::XMStoreFloat4x4(&obj.model, MakeCubeModel(cube.position, cube.scale));
+            DirectX::XMMATRIX model = MakeCubeModel(cube.position, cube.scale);
+            DirectX::XMStoreFloat4x4(&obj.model, model);
+            DirectX::XMStoreFloat4x4(&obj.normalModel, MakeNormalMatrix(model));
             obj.size = DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f);
+            obj.material = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
             obj.color = cube.color;
 
             m_pDeviceContext->UpdateSubresource(m_pObjectBuffer, 0, nullptr, &obj, 0, 0);
@@ -1113,6 +1224,9 @@ void DxApp::Cleanup()
 
     SAFE_RELEASE(m_pCubeTextureView);
     SAFE_RELEASE(m_pCubeTexture);
+
+    SAFE_RELEASE(m_pCubeNormalMapView);
+    SAFE_RELEASE(m_pCubeNormalMapTexture);
 
     SAFE_RELEASE(m_pCubemapView);
     SAFE_RELEASE(m_pCubemapTexture);
