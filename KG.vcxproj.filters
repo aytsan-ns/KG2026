@@ -58,5 +58,11 @@
     <None Include="Transparent.ps">
       <Filter>Исходные файлы</Filter>
     </None>
+    <None Include="Sepia.vs">
+      <Filter>Исходные файлы</Filter>
+    </None>
+    <None Include="Sepia.ps">
+      <Filter>Исходные файлы</Filter>
+    </None>
   </ItemGroup>
 </Project>
