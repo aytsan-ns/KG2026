@@ -1218,18 +1218,17 @@ void DxApp::Cleanup()
     SAFE_RELEASE(m_pSkyDepthState);
     SAFE_RELEASE(m_pTransDepthState);
     SAFE_RELEASE(m_pOpaqueDepthState);
-
-    SAFE_RELEASE(m_pSampler);
     SAFE_RELEASE(m_pSkyRasterizerState);
+    SAFE_RELEASE(m_pSampler);
 
-    SAFE_RELEASE(m_pCubeTextureView);
-    SAFE_RELEASE(m_pCubeTexture);
+    SAFE_RELEASE(m_pCubemapView);
+    SAFE_RELEASE(m_pCubemapTexture);
 
     SAFE_RELEASE(m_pCubeNormalMapView);
     SAFE_RELEASE(m_pCubeNormalMapTexture);
 
-    SAFE_RELEASE(m_pCubemapView);
-    SAFE_RELEASE(m_pCubemapTexture);
+    SAFE_RELEASE(m_pCubeTextureView);
+    SAFE_RELEASE(m_pCubeTexture);
 
     SAFE_RELEASE(m_pCubeInputLayout);
     SAFE_RELEASE(m_pCubeVertexShader);
@@ -1260,13 +1259,25 @@ void DxApp::Cleanup()
         ID3D11Debug* d3dDebug = nullptr;
         if (SUCCEEDED(m_pDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&d3dDebug)))
         {
-            d3dDebug->ReportLiveDeviceObjects((D3D11_RLDO_FLAGS)(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL));
+            UINT references = m_pDevice->Release();
+            m_pDevice = nullptr;
+
+            if (references > 1)
+            {
+                d3dDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+            }
+
             d3dDebug->Release();
         }
+        else
+        {
+            SAFE_RELEASE(m_pDevice);
+        }
     }
+#else
+    SAFE_RELEASE(m_pDevice);
 #endif
 
-    SAFE_RELEASE(m_pDevice);
     SAFE_RELEASE(m_pSelectedAdapter);
     SAFE_RELEASE(m_pFactory);
 }
