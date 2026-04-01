@@ -116,16 +116,16 @@ copy /Y "$(ProjectDir)Cube.vs" "$(OutDir)"
 copy /Y "$(ProjectDir)Cube.ps" "$(OutDir)"
 copy /Y "$(ProjectDir)Skybox.vs" "$(OutDir)"
 copy /Y "$(ProjectDir)Skybox.ps" "$(OutDir)"
+copy /Y "$(ProjectDir)Transparent.ps" "$(OutDir)"
 
 copy /Y "$(ProjectDir)cube.dds" "$(OutDir)"
+copy /Y "$(ProjectDir)cube_nm.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posx.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negx.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posz.dds" "$(OutDir)"
-copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
-
-copy /Y "$(ProjectDir)Transparent.ps" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -150,16 +150,16 @@ copy /Y "$(ProjectDir)Cube.vs" "$(OutDir)"
 copy /Y "$(ProjectDir)Cube.ps" "$(OutDir)"
 copy /Y "$(ProjectDir)Skybox.vs" "$(OutDir)"
 copy /Y "$(ProjectDir)Skybox.ps" "$(OutDir)"
+copy /Y "$(ProjectDir)Transparent.ps" "$(OutDir)"
 
 copy /Y "$(ProjectDir)cube.dds" "$(OutDir)"
+copy /Y "$(ProjectDir)cube_nm.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posx.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negx.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posz.dds" "$(OutDir)"
-copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
-
-copy /Y "$(ProjectDir)Transparent.ps" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

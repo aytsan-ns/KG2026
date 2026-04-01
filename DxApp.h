@@ -40,6 +40,7 @@ private:
 
     bool CreateConstantBuffers();
     bool CreateCubeTexture();
+    bool CreateCubeNormalMapTexture();
     bool CreateCubemapTexture();
     bool CreateSampler();
 
@@ -83,6 +84,9 @@ private:
 
     ID3D11Texture2D* m_pCubeTexture = nullptr;
     ID3D11ShaderResourceView* m_pCubeTextureView = nullptr;
+
+    ID3D11Texture2D* m_pCubeNormalMapTexture = nullptr;
+    ID3D11ShaderResourceView* m_pCubeNormalMapView = nullptr;
 
     ID3D11Texture2D* m_pCubemapTexture = nullptr;
     ID3D11ShaderResourceView* m_pCubemapView = nullptr;

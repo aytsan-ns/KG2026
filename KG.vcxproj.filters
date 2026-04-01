@@ -43,5 +43,20 @@
     <None Include="Triangle.ps">
       <Filter>Исходные файлы</Filter>
     </None>
+    <None Include="Cube.vs">
+      <Filter>Исходные файлы</Filter>
+    </None>
+    <None Include="Cube.ps">
+      <Filter>Исходные файлы</Filter>
+    </None>
+    <None Include="Skybox.vs">
+      <Filter>Исходные файлы</Filter>
+    </None>
+    <None Include="Skybox.ps">
+      <Filter>Исходные файлы</Filter>
+    </None>
+    <None Include="Transparent.ps">
+      <Filter>Исходные файлы</Filter>
+    </None>
   </ItemGroup>
 </Project>
