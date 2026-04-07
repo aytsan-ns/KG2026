@@ -38,6 +38,9 @@ private:
     bool CreateSkyboxShadersAndLayout();
     bool CreateTransparentShader();
 
+    bool CreatePostProcessShaders();
+    bool CreateColorBuffer();
+
     bool CreateConstantBuffers();
     bool CreateCubeTexture();
     bool CreateCubeNormalMapTexture();
@@ -69,6 +72,10 @@ private:
     ID3D11VertexShader* m_pCubeVertexShader = nullptr;
     ID3D11PixelShader* m_pCubePixelShader = nullptr;
     ID3D11PixelShader* m_pTransparentPixelShader = nullptr;
+
+    ID3D11VertexShader* m_pSepiaVertexShader = nullptr;
+    ID3D11PixelShader* m_pSepiaPixelShader = nullptr;
+
     ID3D11InputLayout* m_pCubeInputLayout = nullptr;
     UINT m_cubeIndexCount = 0;
 
@@ -82,6 +89,9 @@ private:
     ID3D11Buffer* m_pObjectBuffer = nullptr;
     ID3D11Buffer* m_pSceneBuffer = nullptr;
 
+    ID3D11Buffer* m_pGeomBufferInst = nullptr;
+    ID3D11Buffer* m_pGeomBufferInstVis = nullptr;
+
     ID3D11Texture2D* m_pCubeTexture = nullptr;
     ID3D11ShaderResourceView* m_pCubeTextureView = nullptr;
 
@@ -90,6 +100,10 @@ private:
 
     ID3D11Texture2D* m_pCubemapTexture = nullptr;
     ID3D11ShaderResourceView* m_pCubemapView = nullptr;
+
+    ID3D11Texture2D* m_pColorBuffer = nullptr;
+    ID3D11RenderTargetView* m_pColorBufferRTV = nullptr;
+    ID3D11ShaderResourceView* m_pColorBufferSRV = nullptr;
 
     ID3D11SamplerState* m_pSampler = nullptr;
     ID3D11RasterizerState* m_pSkyRasterizerState = nullptr;

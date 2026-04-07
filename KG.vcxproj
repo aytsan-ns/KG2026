@@ -125,7 +125,11 @@ copy /Y "$(ProjectDir)negx.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posz.dds" "$(OutDir)"
-copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
+
+copy /Y "$(ProjectDir)Sepia.vs" "$(OutDir)"
+copy /Y "$(ProjectDir)Sepia.ps" "$(OutDir)"
+copy /Y "$(ProjectDir)kitty.dds" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -159,7 +163,11 @@ copy /Y "$(ProjectDir)negx.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)negy.dds" "$(OutDir)"
 copy /Y "$(ProjectDir)posz.dds" "$(OutDir)"
-copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
+
+copy /Y "$(ProjectDir)Sepia.vs" "$(OutDir)"
+copy /Y "$(ProjectDir)Sepia.ps" "$(OutDir)"
+copy /Y "$(ProjectDir)kitty.dds" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -175,6 +183,8 @@ copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"</Command>
   <ItemGroup>
     <None Include="Cube.ps" />
     <None Include="Cube.vs" />
+    <None Include="Sepia.ps" />
+    <None Include="Sepia.vs" />
     <None Include="Skybox.ps" />
     <None Include="Skybox.vs" />
     <None Include="Transparent.ps" />
