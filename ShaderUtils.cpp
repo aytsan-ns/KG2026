@@ -230,6 +230,11 @@ bool CompileShaderFromFile(const std::wstring& path, ID3DBlob** outCode)
         entryPoint = "ps";
         platform = "ps_5_0";
     }
+    else if (ext == L"cs")
+    {
+        entryPoint = "cs";
+        platform = "cs_5_0";
+    }
     else
     {
         return false;

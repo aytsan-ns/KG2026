@@ -64,5 +64,8 @@
     <None Include="Sepia.ps">
       <Filter>Исходные файлы</Filter>
     </None>
+    <None Include="FrustumCull.cs">
+      <Filter>Исходные файлы</Filter>
+    </None>
   </ItemGroup>
 </Project>
