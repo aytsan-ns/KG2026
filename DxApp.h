@@ -4,6 +4,7 @@
 struct ID3D11Buffer;
 struct ID3D11VertexShader;
 struct ID3D11PixelShader;
+struct ID3D11ComputeShader;
 struct ID3D11InputLayout;
 struct ID3D11ShaderResourceView;
 struct ID3D11SamplerState;
@@ -12,6 +13,8 @@ struct ID3D11RasterizerState;
 struct ID3D11DepthStencilView;
 struct ID3D11DepthStencilState;
 struct ID3D11BlendState;
+struct ID3D11UnorderedAccessView;
+struct ID3D11Query;
 
 class DxApp
 {
@@ -51,6 +54,11 @@ private:
     bool CreateDepthStates();
     bool CreateBlendStates();
 
+    bool CreateCullShader();
+    bool CreateCullResources();
+    bool CreateGpuQueries();
+    void ReadQueries();
+
 private:
     HWND m_hWnd = nullptr;
 
@@ -76,6 +84,8 @@ private:
     ID3D11VertexShader* m_pSepiaVertexShader = nullptr;
     ID3D11PixelShader* m_pSepiaPixelShader = nullptr;
 
+    ID3D11ComputeShader* m_pCullShader = nullptr;
+
     ID3D11InputLayout* m_pCubeInputLayout = nullptr;
     UINT m_cubeIndexCount = 0;
 
@@ -91,6 +101,14 @@ private:
 
     ID3D11Buffer* m_pGeomBufferInst = nullptr;
     ID3D11Buffer* m_pGeomBufferInstVis = nullptr;
+    ID3D11Buffer* m_pCullParams = nullptr;
+
+    ID3D11Buffer* m_pIndirectArgsSrc = nullptr;
+    ID3D11UnorderedAccessView* m_pIndirectArgsUAV = nullptr;
+    ID3D11Buffer* m_pIndirectArgs = nullptr;
+
+    ID3D11Buffer* m_pGeomBufferInstVisGPU = nullptr;
+    ID3D11UnorderedAccessView* m_pGeomBufferInstVisGPU_UAV = nullptr;
 
     ID3D11Texture2D* m_pCubeTexture = nullptr;
     ID3D11ShaderResourceView* m_pCubeTextureView = nullptr;
@@ -111,6 +129,14 @@ private:
     ID3D11DepthStencilState* m_pTransDepthState = nullptr;
     ID3D11DepthStencilState* m_pSkyDepthState = nullptr;
     ID3D11BlendState* m_pTransBlendState = nullptr;
+
+    ID3D11Query* m_queries[10] = {};
+
+    UINT m_curFrame = 0;
+    UINT m_lastCompletedFrame = 0;
+    UINT m_gpuVisibleInstances = 0;
+
+    bool m_computeCull = true;
 
     bool  m_mouseDown = false;
     POINT m_lastMouse = { 0, 0 };

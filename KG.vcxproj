@@ -129,7 +129,9 @@ copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
 
 copy /Y "$(ProjectDir)Sepia.vs" "$(OutDir)"
 copy /Y "$(ProjectDir)Sepia.ps" "$(OutDir)"
-copy /Y "$(ProjectDir)kitty.dds" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)kitty.dds" "$(OutDir)"
+
+copy /Y "$(ProjectDir)FrustumCull.cs" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -167,7 +169,9 @@ copy /Y "$(ProjectDir)negz.dds" "$(OutDir)"
 
 copy /Y "$(ProjectDir)Sepia.vs" "$(OutDir)"
 copy /Y "$(ProjectDir)Sepia.ps" "$(OutDir)"
-copy /Y "$(ProjectDir)kitty.dds" "$(OutDir)"</Command>
+copy /Y "$(ProjectDir)kitty.dds" "$(OutDir)"
+
+copy /Y "$(ProjectDir)FrustumCull.cs" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -183,6 +187,7 @@ copy /Y "$(ProjectDir)kitty.dds" "$(OutDir)"</Command>
   <ItemGroup>
     <None Include="Cube.ps" />
     <None Include="Cube.vs" />
+    <None Include="FrustumCull.cs" />
     <None Include="Sepia.ps" />
     <None Include="Sepia.vs" />
     <None Include="Skybox.ps" />
